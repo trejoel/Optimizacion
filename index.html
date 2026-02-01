@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Rooted Tree Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #treeCanvas {
+            border: 2px solid #ddd;
+            display: block;
+            margin: 0 auto;
+            background-color: #fafafa;
+            cursor: pointer;
+        }
+        .info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            min-height: 60px;
+        }
+        .info h3 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+        .info p {
+            margin: 5px 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Random Rooted Tree Generator</h1>
+        
+        <div class="controls">
+            <button onclick="generateNewTree()">Generate New Tree</button>
+            <button onclick="clearSelection()">Clear Selection</button>
+            <button onclick="computeWeight()">Compute Weight</button>
+            <button onclick="findOptimalSet()" style="background-color: #FF9800;">Optimal</button>
+        </div>
+        
+        <canvas id="treeCanvas" width="1000" height="600"></canvas>
+        
+        <div class="info" id="weightResult" style="background-color: #fff3e0; border-left: 4px solid #ff9800; display: none; margin-bottom: 10px;">
+            <h3 style="color: #e65100; margin: 0;">Computed Weight Result</h3>
+            <p id="weightResultText" style="font-size: 18px; font-weight: bold; color: #333;"></p>
+        </div>
+        
+        <div class="info" id="nodeInfo">
+            <h3>No nodes selected</h3>
+            <p>Click on any node to select it (turns green)</p>
+            <p>Click again to deselect it (returns to blue)</p>
+            <p>You can select multiple nodes</p>
+        </div>
+    </div>
+
+    <script>
+        // Tree node class
+        class TreeNode {
+            constructor(id, weight, level) {
+                this.id = id;              // Node identifier
+                this.weight = weight;      // Node weight
+                this.level = level;        // Level in tree (0 = root)
+                this.children = [];        // Child nodes
+                this.x = 0;                // X position for drawing
+                this.y = 0;                // Y position for drawing
+                this.radius = 25;          // Node circle radius
+            }
+            
+            addChild(node) {
+                this.children.push(node);
+            }
+        }
+        
+        // Global variables
+        let canvas = document.getElementById('treeCanvas');
+        let ctx = canvas.getContext('2d');
+        let rootNode = null;
+        let selectedNodes = new Set();  // Set of selected nodes (allows multiple selection)
+        let nodeIdCounter = 0;
+        let allNodes = [];  // Keep track of all nodes for click detection
+        
+        // Generate a random tree
+        function generateRandomTree(maxHeight = 4) {
+            nodeIdCounter = 0;
+            allNodes = [];
+            
+            // Create root node
+            rootNode = new TreeNode(
+                generateNodeId(),
+                getRandomWeight(),
+                0
+            );
+            allNodes.push(rootNode);
+            
+            // Recursively build the tree
+            buildTreeRecursive(rootNode, maxHeight);
+            
+            return rootNode;
+        }
+        
+        // Recursively build tree structure
+        function buildTreeRecursive(node, maxHeight) {
+            if (node.level >= maxHeight) {
+                return; // Max height reached
+            }
+            
+            // Randomly decide how many children (0 to 3)
+            // Probability decreases with depth
+            let maxChildren = Math.max(1, 4 - node.level);
+            let numChildren = Math.floor(Math.random() * (maxChildren + 1));
+            
+            for (let i = 0; i < numChildren; i++) {
+                let childNode = new TreeNode(
+                    generateNodeId(),
+                    getRandomWeight(),
+                    node.level + 1
+                );
+                node.addChild(childNode);
+                allNodes.push(childNode);
+                
+                // Recursively build subtree
+                buildTreeRecursive(childNode, maxHeight);
+            }
+        }
+        
+        // Generate node identifier
+        function generateNodeId() {
+            return 'N' + nodeIdCounter++;
+        }
+        
+        // Generate random weight between 1 and 100
+        function getRandomWeight() {
+            return Math.floor(Math.random() * 100) + 1;
+        }
+        
+        // Calculate positions for all nodes
+        function calculatePositions(node, x, y, horizontalSpace) {
+            node.x = x;
+            node.y = y;
+            
+            if (node.children.length === 0) {
+                return;
+            }
+            
+            // Calculate spacing for children
+            let childSpacing = horizontalSpace / (node.children.length + 1);
+            let startX = x - horizontalSpace / 2;
+            
+            for (let i = 0; i < node.children.length; i++) {
+                let childX = startX + childSpacing * (i + 1);
+                let childY = y + 100; // Vertical spacing between levels
+                
+                calculatePositions(
+                    node.children[i],
+                    childX,
+                    childY,
+                    horizontalSpace / (node.children.length + 0.5)
+                );
+            }
+        }
+        
+        // Draw the tree
+        function drawTree() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!rootNode) return;
+            
+            // Draw all edges first
+            drawEdges(rootNode);
+            
+            // Draw all nodes
+            drawNodes(rootNode);
+        }
+        
+        // Draw edges (connections between nodes)
+        function drawEdges(node) {
+            for (let child of node.children) {
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(child.x, child.y);
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Recursively draw child edges
+                drawEdges(child);
+            }
+        }
+        
+        // Draw nodes
+        function drawNodes(node) {
+            // Draw this node
+            drawNode(node);
+            
+            // Recursively draw children
+            for (let child of node.children) {
+                drawNodes(child);
+            }
+        }
+        
+        // Draw a single node
+        function drawNode(node) {
+            // Determine if this node is selected
+            let isSelected = selectedNodes.has(node);
+            
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = isSelected ? '#4CAF50' : '#2196F3';
+            ctx.fill();
+            ctx.strokeStyle = isSelected ? '#2e7d32' : '#1976D2';
+            ctx.lineWidth = isSelected ? 4 : 2;
+            ctx.stroke();
+            
+            // Draw node ID
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.id, node.x, node.y - 5);
+            
+            // Draw weight
+            ctx.font = '10px Arial';
+            ctx.fillText('w:' + node.weight, node.x, node.y + 8);
+        }
+        
+        // Handle canvas click
+        canvas.addEventListener('click', function(event) {
+            let rect = canvas.getBoundingClientRect();
+            let clickX = event.clientX - rect.left;
+            let clickY = event.clientY - rect.top;
+            
+            // Check if click is on any node
+            for (let node of allNodes) {
+                let distance = Math.sqrt(
+                    Math.pow(clickX - node.x, 2) + 
+                    Math.pow(clickY - node.y, 2)
+                );
+                
+                if (distance <= node.radius) {
+                    // Toggle selection
+                    if (selectedNodes.has(node)) {
+                        selectedNodes.delete(node);  // Deselect if already selected
+                    } else {
+                        selectedNodes.add(node);     // Select if not selected
+                    }
+                    updateNodeInfo();
+                    drawTree();
+                    return;
+                }
+            }
+            
+            // No node clicked - do nothing (keep current selections)
+        });
+        
+        // Update node info display
+        function updateNodeInfo() {
+            let infoDiv = document.getElementById('nodeInfo');
+            
+            if (selectedNodes.size > 0) {
+                let selectedArray = Array.from(selectedNodes);
+                let totalWeight = selectedArray.reduce((sum, node) => sum + node.weight, 0);
+                
+                let nodeList = selectedArray
+                    .map(node => `${node.id} (w:${node.weight}, level:${node.level})`)
+                    .join(', ');
+                
+                infoDiv.innerHTML = `
+                    <h3>Selected Nodes: ${selectedNodes.size}</h3>
+                    <p><strong>Nodes:</strong> ${nodeList}</p>
+                    <p><strong>Total Weight:</strong> ${totalWeight}</p>
+                    <p><em>Click a node to toggle its selection</em></p>
+                `;
+            } else {
+                infoDiv.innerHTML = `
+                    <h3>No nodes selected</h3>
+                    <p>Click on any node to select it (turns green)</p>
+                    <p>Click again to deselect it (returns to blue)</p>
+                    <p>You can select multiple nodes</p>
+                `;
+            }
+        }
+        
+        // Generate new tree button handler
+        function generateNewTree() {
+            selectedNodes.clear();  // Clear all selections
+            generateRandomTree(4);
+            calculatePositions(rootNode, canvas.width / 2, 50, canvas.width - 100);
+            drawTree();
+            updateNodeInfo();
+            hideWeightResult();
+        }
+        
+        // Clear selection button handler
+        function clearSelection() {
+            selectedNodes.clear();  // Clear all selections
+            drawTree();
+            updateNodeInfo();
+            hideWeightResult();
+        }
+        
+        // Compute weight button handler
+        function computeWeight() {
+            if (selectedNodes.size === 0) {
+                alert('Please select at least one node first!');
+                return;
+            }
+            
+            // Calculate sum of weights
+            let totalWeight = 0;
+            let nodeDetails = [];
+            
+            for (let node of selectedNodes) {
+                totalWeight += node.weight;
+                nodeDetails.push(`${node.id}(${node.weight})`);
+            }
+            
+            // Display result
+            showWeightResult(totalWeight, nodeDetails);
+        }
+        
+        // Show weight computation result
+        function showWeightResult(totalWeight, nodeDetails) {
+            let resultDiv = document.getElementById('weightResult');
+            let resultText = document.getElementById('weightResultText');
+            
+            resultText.innerHTML = `
+                Total Weight = ${nodeDetails.join(' + ')} = <span style="color: #e65100;">${totalWeight}</span>
+            `;
+            
+            resultDiv.style.display = 'block';
+        }
+        
+        // Hide weight result
+        function hideWeightResult() {
+            let resultDiv = document.getElementById('weightResult');
+            resultDiv.style.display = 'none';
+        }
+        
+        // Find optimal (maximum weighted independent set) button handler
+        function findOptimalSet() {
+            if (!rootNode) {
+                alert('Please generate a tree first!');
+                return;
+            }
+            
+            // Clear current selection
+            selectedNodes.clear();
+            
+            // Compute maximum weighted independent set using dynamic programming
+            let result = computeMWIS(rootNode);
+            
+            // Select the optimal nodes
+            for (let node of result.optimalSet) {
+                selectedNodes.add(node);
+            }
+            
+            // Update display
+            drawTree();
+            updateNodeInfo();
+            
+            // Show result
+            showWeightResult(result.maxWeight, 
+                result.optimalSet.map(node => `${node.id}(${node.weight})`));
+        }
+        
+        // Compute Maximum Weighted Independent Set using Dynamic Programming
+        // Returns: { maxWeight: number, optimalSet: Set of nodes }
+        function computeMWIS(node) {
+            if (!node) {
+                return { maxWeight: 0, optimalSet: new Set() };
+            }
+            
+            // Base case: leaf node
+            if (node.children.length === 0) {
+                return { 
+                    maxWeight: node.weight, 
+                    optimalSet: new Set([node]) 
+                };
+            }
+            
+            // Recursive case: compute for children and grandchildren
+            
+            // Option 1: Include this node
+            // If we include this node, we cannot include its children
+            // But we can include grandchildren
+            let includeWeight = node.weight;
+            let includeSet = new Set([node]);
+            
+            for (let child of node.children) {
+                for (let grandchild of child.children) {
+                    let grandchildResult = computeMWIS(grandchild);
+                    includeWeight += grandchildResult.maxWeight;
+                    for (let n of grandchildResult.optimalSet) {
+                        includeSet.add(n);
+                    }
+                }
+            }
+            
+            // Option 2: Exclude this node
+            // If we exclude this node, we can include its children
+            let excludeWeight = 0;
+            let excludeSet = new Set();
+            
+            for (let child of node.children) {
+                let childResult = computeMWIS(child);
+                excludeWeight += childResult.maxWeight;
+                for (let n of childResult.optimalSet) {
+                    excludeSet.add(n);
+                }
+            }
+            
+            // Choose the option with maximum weight
+            if (includeWeight >= excludeWeight) {
+                return { 
+                    maxWeight: includeWeight, 
+                    optimalSet: includeSet 
+                };
+            } else {
+                return { 
+                    maxWeight: excludeWeight, 
+                    optimalSet: excludeSet 
+                };
+            }
+        }
+        
+        // Initialize with a tree
+        generateNewTree();
+    </script>
+</body>
+</html>
