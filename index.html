@@ -84,9 +84,11 @@
         
         <div class="info" id="nodeInfo">
             <h3>No nodes selected</h3>
-            <p>Click on any node to select it (turns green)</p>
-            <p>Click again to deselect it (returns to blue)</p>
-            <p>You can select multiple nodes</p>
+            <p><strong>Selection Rules (Independent Set):</strong></p>
+            <p>• Click a node to select it (turns green)</p>
+            <p>• Selecting a node automatically deselects its neighbors</p>
+            <p>• Cannot select a node if any neighbor is already selected</p>
+            <p>• Gray nodes are disabled (have selected neighbors)</p>
         </div>
     </div>
 
@@ -98,6 +100,7 @@
                 this.weight = weight;      // Node weight
                 this.level = level;        // Level in tree (0 = root)
                 this.children = [];        // Child nodes
+                this.parent = null;        // Parent node
                 this.x = 0;                // X position for drawing
                 this.y = 0;                // Y position for drawing
                 this.radius = 25;          // Node circle radius
@@ -105,6 +108,21 @@
             
             addChild(node) {
                 this.children.push(node);
+                node.parent = this;        // Set parent reference
+            }
+            
+            // Get all neighbors (parent + children)
+            getNeighbors() {
+                let neighbors = [...this.children];
+                if (this.parent) {
+                    neighbors.push(this.parent);
+                }
+                return neighbors;
+            }
+            
+            // Check if this node has any selected neighbors
+            hasSelectedNeighbor() {
+                return this.getNeighbors().some(neighbor => selectedNodes.has(neighbor));
             }
         }
         
@@ -241,13 +259,28 @@
             // Determine if this node is selected
             let isSelected = selectedNodes.has(node);
             
+            // Determine if this node is disabled (has selected neighbors)
+            let isDisabled = !isSelected && node.hasSelectedNeighbor();
+            
             // Draw circle
             ctx.beginPath();
             ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
-            ctx.fillStyle = isSelected ? '#4CAF50' : '#2196F3';
+            
+            if (isSelected) {
+                ctx.fillStyle = '#4CAF50';  // Green for selected
+                ctx.strokeStyle = '#2e7d32';
+                ctx.lineWidth = 4;
+            } else if (isDisabled) {
+                ctx.fillStyle = '#BDBDBD';  // Gray for disabled
+                ctx.strokeStyle = '#757575';
+                ctx.lineWidth = 2;
+            } else {
+                ctx.fillStyle = '#2196F3';  // Blue for normal
+                ctx.strokeStyle = '#1976D2';
+                ctx.lineWidth = 2;
+            }
+            
             ctx.fill();
-            ctx.strokeStyle = isSelected ? '#2e7d32' : '#1976D2';
-            ctx.lineWidth = isSelected ? 4 : 2;
             ctx.stroke();
             
             // Draw node ID
@@ -276,14 +309,31 @@
                 );
                 
                 if (distance <= node.radius) {
-                    // Toggle selection
+                    // Check if currently selected
                     if (selectedNodes.has(node)) {
-                        selectedNodes.delete(node);  // Deselect if already selected
+                        // Deselect this node
+                        selectedNodes.delete(node);
                     } else {
-                        selectedNodes.add(node);     // Select if not selected
+                        // Try to select this node
+                        // First check if it has any selected neighbors
+                        if (node.hasSelectedNeighbor()) {
+                            // Cannot select - show message
+                            alert(`Cannot select ${node.id}: it has selected neighbors. Deselect neighbors first.`);
+                        } else {
+                            // Can select - add it and deselect all its neighbors
+                            selectedNodes.add(node);
+                            
+                            // Deselect all neighbors
+                            let neighbors = node.getNeighbors();
+                            for (let neighbor of neighbors) {
+                                selectedNodes.delete(neighbor);
+                            }
+                        }
                     }
+                    
                     updateNodeInfo();
                     drawTree();
+                    hideWeightResult();
                     return;
                 }
             }
@@ -304,17 +354,19 @@
                     .join(', ');
                 
                 infoDiv.innerHTML = `
-                    <h3>Selected Nodes: ${selectedNodes.size}</h3>
+                    <h3>Selected Nodes: ${selectedNodes.size} (Independent Set)</h3>
                     <p><strong>Nodes:</strong> ${nodeList}</p>
                     <p><strong>Total Weight:</strong> ${totalWeight}</p>
-                    <p><em>Click a node to toggle its selection</em></p>
+                    <p><em>Click a green node to deselect it. Gray nodes are disabled.</em></p>
                 `;
             } else {
                 infoDiv.innerHTML = `
                     <h3>No nodes selected</h3>
-                    <p>Click on any node to select it (turns green)</p>
-                    <p>Click again to deselect it (returns to blue)</p>
-                    <p>You can select multiple nodes</p>
+                    <p><strong>Selection Rules (Independent Set):</strong></p>
+                    <p>• Click a node to select it (turns green)</p>
+                    <p>• Selecting a node automatically deselects its neighbors</p>
+                    <p>• Cannot select a node if any neighbor is already selected</p>
+                    <p>• Gray nodes are disabled (have selected neighbors)</p>
                 `;
             }
         }
