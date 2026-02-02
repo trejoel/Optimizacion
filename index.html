@@ -69,10 +69,10 @@
         <h1>Random Rooted Tree Generator</h1>
         
         <div class="controls">
-            <button onclick="generateNewTree()">Generate New Tree</button>
-            <button onclick="clearSelection()">Clear Selection</button>
-            <button onclick="computeWeight()">Compute Weight</button>
-            <button onclick="findOptimalSet()" style="background-color: #FF9800;">Optimal</button>
+            <button onclick="generateNewTree()">Generar Árbol</button>
+            <button onclick="clearSelection()">Borrar Selección</button>
+            <!--<button onclick="computeWeight()">Calcular Peso</button>-->
+            <button onclick="findOptimalSet()" style="background-color: #FF9800;">Calcular Óptimo</button>
         </div>
         
         <canvas id="treeCanvas" width="1000" height="600"></canvas>
@@ -83,12 +83,12 @@
         </div>
         
         <div class="info" id="nodeInfo">
-            <h3>No nodes selected</h3>
-            <p><strong>Selection Rules (Independent Set):</strong></p>
-            <p>• Click a node to select it (turns green)</p>
-            <p>• Selecting a node automatically deselects its neighbors</p>
-            <p>• Cannot select a node if any neighbor is already selected</p>
-            <p>• Gray nodes are disabled (have selected neighbors)</p>
+                    <h3>No nodes selected</h3>
+                    <p><strong>Selection Rules (Independent Set):</strong></p>
+                    <p>• Click a node to select it (turns green)</p>
+                    <p>• Selecting a node automatically deselects its neighbors</p>
+                    <p>• Cannot select a node if any neighbor is already selected</p>
+                    <p>• Gray nodes are disabled (have selected neighbors)</p>
         </div>
     </div>
 
