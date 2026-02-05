@@ -3,21 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Rooted Tree Generator</title>
+    <title>Graph Theory Visualizers</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
             background-color: #f5f5f5;
         }
+        
+        /* Navigation Bar */
+        .navbar {
+            background-color: #1976D2;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .navbar h1 {
+            color: white;
+            margin: 0;
+            display: inline-block;
+            font-size: 24px;
+        }
+        .nav-links {
+            float: right;
+            margin-top: 5px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav-links a:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        .nav-links a.active {
+            background-color: #FF9800;
+        }
+        
+        /* Container */
         .container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 20px auto;
             background-color: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: calc(100vh - 120px);
         }
+        
+        /* Home Page */
+        .home-content {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .home-content h2 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        .home-content p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        .card {
+            background-color: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+        .card h3 {
+            color: #1976D2;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .card p {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .card .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .card .btn:hover {
+            background-color: #45a049;
+        }
+        .card.vertex-cover .btn {
+            background-color: #FF9800;
+        }
+        .card.vertex-cover .btn:hover {
+            background-color: #F57C00;
+        }
+        
+        /* Page Content */
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        
+        /* Common styles */
         h1 {
             color: #333;
             text-align: center;
@@ -27,7 +140,6 @@
             margin-bottom: 20px;
         }
         button {
-            background-color: #4CAF50;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -37,9 +149,9 @@
             margin: 5px;
         }
         button:hover {
-            background-color: #45a049;
+            opacity: 0.9;
         }
-        #treeCanvas {
+        canvas {
             border: 2px solid #ddd;
             display: block;
             margin: 0 auto;
@@ -50,68 +162,199 @@
             text-align: center;
             margin-top: 20px;
             padding: 15px;
-            background-color: #e8f5e9;
             border-radius: 5px;
             min-height: 60px;
         }
-        .info h3 {
-            margin: 0 0 10px 0;
-            color: #2e7d32;
-        }
-        .info p {
-            margin: 5px 0;
-            color: #555;
+        
+        /* Clear floats */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <div class="navbar clearfix">
+        <h1>Divirtiéndonos con Algoritmos</h1>
+        <div class="nav-links">
+            <a href="#" onclick="showPage('home')" id="nav-home" class="active">Home</a>
+            <a href="#" onclick="showPage('tree')" id="nav-tree">Conjunto Independiente con Pesos</a>
+            <a href="#" onclick="showPage('vertex-cover')" id="nav-vertex-cover">Prevención de peleas</a>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>Random Rooted Tree Generator</h1>
-        
-        <div class="controls">
-            <button onclick="generateNewTree()">Generar Árbol</button>
-            <button onclick="clearSelection()">Borrar Selección</button>
-            <!--<button onclick="computeWeight()">Calcular Peso</button>-->
-            <button onclick="findOptimalSet()" style="background-color: #FF9800;">Calcular Óptimo</button>
+        <!-- Home Page -->
+        <div id="home-page" class="page-content active">
+            <div class="home-content">
+                <h2>Bienvenidos a Divirtiéndonos con Algoritmos</h2>
+                <p>Herramienta interactiva para explorar conceptos de algoritmia</p>
+                
+                <div class="card-container">
+                    <div class="card" onclick="showPage('tree')">
+                        <h3>🌳 Conjunto Independiente con Pesos</h3>
+                        <p>
+                            • Generar árbol aleatorio<br>
+                            • Selecciona nodos (conjunto independiente)<br>
+                            • Calcula los pesos<br>
+                            • Encuentra el CI máximo con pesos
+                        </p>
+                        <a href="#" class="btn" onclick="showPage('tree'); return false;">Ejecutar</a>
+                    </div>
+                    
+                    <div class="card vertex-cover" onclick="showPage('vertex-cover')">
+                        <h3>🔗 Prevención de peleas</h3>
+                        <p>
+                            • Crea relaciones de conflicto (10-30 invitados)<br>
+                            • Restringe invitados<br>
+                            • Se eliminan conflictos?<br>
+                            • Encuentra la solución óptima
+                        </p>
+                        <a href="#" class="btn" onclick="showPage('vertex-cover'); return false;">Ejecutar</a>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <canvas id="treeCanvas" width="1000" height="600"></canvas>
-        
-        <div class="info" id="weightResult" style="background-color: #fff3e0; border-left: 4px solid #ff9800; display: none; margin-bottom: 10px;">
-            <h3 style="color: #e65100; margin: 0;">Computed Weight Result</h3>
-            <p id="weightResultText" style="font-size: 18px; font-weight: bold; color: #333;"></p>
+
+        <!-- Tree Program Page -->
+        <div id="tree-page" class="page-content">
+            <h1>Conjunto independiente con pesos</h1>
+            
+            <div class="controls">
+                <button onclick="generateNewTree()" style="background-color: #4CAF50;">Generar jerarquia</button>
+                <button onclick="clearTreeSelection()" style="background-color: #2196F3;">Borrar Selección</button>
+                <button onclick="computeWeight()" style="background-color: #9C27B0;">Calcula diversión</button>
+                <button onclick="findOptimalSet()" style="background-color: #FF9800;">Óptimo</button>
+            </div>
+            
+            <canvas id="treeCanvas" width="1000" height="600"></canvas>
+            
+            <div class="info" id="weightResult" style="background-color: #fff3e0; border-left: 4px solid #ff9800; display: none; margin-bottom: 10px;">
+                <h3 style="color: #e65100; margin: 0;">Computed Weight Result</h3>
+                <p id="weightResultText" style="font-size: 18px; font-weight: bold; color: #333;"></p>
+            </div>
+            
+            <div class="info" id="treeNodeInfo" style="background-color: #e8f5e9;">
+                <h3>No nodes selected</h3>
+                <p><strong>Selection Rules (Independent Set):</strong></p>
+                <p>• Click a node to select it (turns green)</p>
+                <p>• Selecting a node automatically deselects its neighbors</p>
+                <p>• Cannot select a node if any neighbor is already selected</p>
+                <p>• Gray nodes are disabled (have selected neighbors)</p>
+            </div>
         </div>
-        
-        <div class="info" id="nodeInfo">
-                    <h3>No nodes selected</h3>
-                    <p><strong>Selection Rules (Independent Set):</strong></p>
-                    <p>• Click a node to select it (turns green)</p>
-                    <p>• Selecting a node automatically deselects its neighbors</p>
-                    <p>• Cannot select a node if any neighbor is already selected</p>
-                    <p>• Gray nodes are disabled (have selected neighbors)</p>
+
+        <!-- Vertex Cover Page -->
+        <div id="vertex-cover-page" class="page-content">
+            <h1>Prevención de peleas</h1>
+            
+            <div class="controls">
+                <div style="margin-bottom: 15px;">
+                    <label for="numNodes" style="font-weight: bold; margin-right: 10px;">Número de invitados:</label>
+                    <input type="range" id="numNodes" min="10" max="30" value="20" 
+                           style="width: 200px; vertical-align: middle;"
+                           oninput="updateNodeCount(this.value)">
+                    <span id="nodeCountDisplay" style="font-weight: bold; margin-left: 10px;">20</span>
+                </div>
+                <button onclick="generateNewGraph()" style="background-color: #4CAF50;">Generar relaciones de conflicto</button>
+                <button onclick="clearGraphSelection()" style="background-color: #2196F3;">Borrar Selección</button>
+                <button onclick="checkVertexCover()" style="background-color: #9C27B0;">Previene conflictos?</button>
+                <button onclick="findOptimalVertexCover()" style="background-color: #FF9800;">Optimo</button>
+            </div>
+            
+            <canvas id="graphCanvas" width="1000" height="600"></canvas>
+            
+            <div class="legend" style="text-align: center; margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+                <div style="display: inline-block; margin: 0 15px;">
+                    <span style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; border: 2px solid #333; background-color: #2196F3;"></span>
+                    <span>Unselected Vertex</span>
+                </div>
+                <div style="display: inline-block; margin: 0 15px;">
+                    <span style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; border: 2px solid #333; background-color: #4CAF50;"></span>
+                    <span>Selected Vertex</span>
+                </div>
+                <div style="display: inline-block; margin: 0 15px;">
+                    <span style="display: inline-block; width: 40px; height: 3px; background-color: #666; vertical-align: middle; margin-right: 5px;"></span>
+                    <span>Covered Edge</span>
+                </div>
+                <div style="display: inline-block; margin: 0 15px;">
+                    <span style="display: inline-block; width: 40px; height: 3px; background-color: #f44336; vertical-align: middle; margin-right: 5px;"></span>
+                    <span>Uncovered Edge</span>
+                </div>
+            </div>
+            
+            <div class="info" id="graphNodeInfo" style="background-color: #e3f2fd;">
+                <h3>Click vertices to select them</h3>
+                <p><strong>Vertex Cover:</strong> A set of vertices such that every edge has at least one endpoint in the set</p>
+            </div>
+            
+            <div id="resultDiv" style="margin-top: 10px; padding: 15px; border-radius: 5px; display: none;"></div>
         </div>
     </div>
 
     <script>
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected page
+            if (pageName === 'home') {
+                document.getElementById('home-page').classList.add('active');
+                document.getElementById('nav-home').classList.add('active');
+            } else if (pageName === 'tree') {
+                document.getElementById('tree-page').classList.add('active');
+                document.getElementById('nav-tree').classList.add('active');
+                if (!treeInitialized) {
+                    initializeTree();
+                    treeInitialized = true;
+                }
+            } else if (pageName === 'vertex-cover') {
+                document.getElementById('vertex-cover-page').classList.add('active');
+                document.getElementById('nav-vertex-cover').classList.add('active');
+                if (!graphInitialized) {
+                    initializeGraph();
+                    graphInitialized = true;
+                }
+            }
+        }
+        
+        let treeInitialized = false;
+        let graphInitialized = false;
+
+        // ============================================
+        // TREE PROGRAM CODE
+        // ============================================
+        
         // Tree node class
         class TreeNode {
             constructor(id, weight, level) {
-                this.id = id;              // Node identifier
-                this.weight = weight;      // Node weight
-                this.level = level;        // Level in tree (0 = root)
-                this.children = [];        // Child nodes
-                this.parent = null;        // Parent node
-                this.x = 0;                // X position for drawing
-                this.y = 0;                // Y position for drawing
-                this.radius = 25;          // Node circle radius
+                this.id = id;
+                this.weight = weight;
+                this.level = level;
+                this.children = [];
+                this.parent = null;
+                this.x = 0;
+                this.y = 0;
+                this.radius = 25;
             }
             
             addChild(node) {
                 this.children.push(node);
-                node.parent = this;        // Set parent reference
+                node.parent = this;
             }
             
-            // Get all neighbors (parent + children)
             getNeighbors() {
                 let neighbors = [...this.children];
                 if (this.parent) {
@@ -120,47 +363,43 @@
                 return neighbors;
             }
             
-            // Check if this node has any selected neighbors
             hasSelectedNeighbor() {
-                return this.getNeighbors().some(neighbor => selectedNodes.has(neighbor));
+                return this.getNeighbors().some(neighbor => selectedTreeNodes.has(neighbor));
             }
         }
         
-        // Global variables
-        let canvas = document.getElementById('treeCanvas');
-        let ctx = canvas.getContext('2d');
+        let treeCanvas, treeCtx;
         let rootNode = null;
-        let selectedNodes = new Set();  // Set of selected nodes (allows multiple selection)
+        let selectedTreeNodes = new Set();
         let nodeIdCounter = 0;
-        let allNodes = [];  // Keep track of all nodes for click detection
+        let allTreeNodes = [];
         
-        // Generate a random tree
+        function initializeTree() {
+            treeCanvas = document.getElementById('treeCanvas');
+            treeCtx = treeCanvas.getContext('2d');
+            
+            treeCanvas.addEventListener('click', handleTreeClick);
+            
+            generateNewTree();
+        }
+        
         function generateRandomTree(maxHeight = 4) {
             nodeIdCounter = 0;
-            allNodes = [];
+            allTreeNodes = [];
             
-            // Create root node
-            rootNode = new TreeNode(
-                generateNodeId(),
-                getRandomWeight(),
-                0
-            );
-            allNodes.push(rootNode);
+            rootNode = new TreeNode(generateNodeId(), getRandomWeight(), 0);
+            allTreeNodes.push(rootNode);
             
-            // Recursively build the tree
             buildTreeRecursive(rootNode, maxHeight);
             
             return rootNode;
         }
         
-        // Recursively build tree structure
         function buildTreeRecursive(node, maxHeight) {
             if (node.level >= maxHeight) {
-                return; // Max height reached
+                return;
             }
             
-            // Randomly decide how many children (0 to 3)
-            // Probability decreases with depth
             let maxChildren = Math.max(1, 4 - node.level);
             let numChildren = Math.floor(Math.random() * (maxChildren + 1));
             
@@ -171,25 +410,21 @@
                     node.level + 1
                 );
                 node.addChild(childNode);
-                allNodes.push(childNode);
+                allTreeNodes.push(childNode);
                 
-                // Recursively build subtree
                 buildTreeRecursive(childNode, maxHeight);
             }
         }
         
-        // Generate node identifier
         function generateNodeId() {
             return 'N' + nodeIdCounter++;
         }
         
-        // Generate random weight between 1 and 100
         function getRandomWeight() {
             return Math.floor(Math.random() * 100) + 1;
         }
         
-        // Calculate positions for all nodes
-        function calculatePositions(node, x, y, horizontalSpace) {
+        function calculateTreePositions(node, x, y, horizontalSpace) {
             node.x = x;
             node.y = y;
             
@@ -197,15 +432,14 @@
                 return;
             }
             
-            // Calculate spacing for children
             let childSpacing = horizontalSpace / (node.children.length + 1);
             let startX = x - horizontalSpace / 2;
             
             for (let i = 0; i < node.children.length; i++) {
                 let childX = startX + childSpacing * (i + 1);
-                let childY = y + 100; // Vertical spacing between levels
+                let childY = y + 100;
                 
-                calculatePositions(
+                calculateTreePositions(
                     node.children[i],
                     childX,
                     childY,
@@ -214,139 +448,110 @@
             }
         }
         
-        // Draw the tree
         function drawTree() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            treeCtx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
             
             if (!rootNode) return;
             
-            // Draw all edges first
-            drawEdges(rootNode);
-            
-            // Draw all nodes
-            drawNodes(rootNode);
+            drawTreeEdges(rootNode);
+            drawTreeNodes(rootNode);
         }
         
-        // Draw edges (connections between nodes)
-        function drawEdges(node) {
+        function drawTreeEdges(node) {
             for (let child of node.children) {
-                ctx.beginPath();
-                ctx.moveTo(node.x, node.y);
-                ctx.lineTo(child.x, child.y);
-                ctx.strokeStyle = '#999';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                treeCtx.beginPath();
+                treeCtx.moveTo(node.x, node.y);
+                treeCtx.lineTo(child.x, child.y);
+                treeCtx.strokeStyle = '#999';
+                treeCtx.lineWidth = 2;
+                treeCtx.stroke();
                 
-                // Recursively draw child edges
-                drawEdges(child);
+                drawTreeEdges(child);
             }
         }
         
-        // Draw nodes
-        function drawNodes(node) {
-            // Draw this node
-            drawNode(node);
+        function drawTreeNodes(node) {
+            drawTreeNode(node);
             
-            // Recursively draw children
             for (let child of node.children) {
-                drawNodes(child);
+                drawTreeNodes(child);
             }
         }
         
-        // Draw a single node
-        function drawNode(node) {
-            // Determine if this node is selected
-            let isSelected = selectedNodes.has(node);
-            
-            // Determine if this node is disabled (has selected neighbors)
+        function drawTreeNode(node) {
+            let isSelected = selectedTreeNodes.has(node);
             let isDisabled = !isSelected && node.hasSelectedNeighbor();
             
-            // Draw circle
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+            treeCtx.beginPath();
+            treeCtx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
             
             if (isSelected) {
-                ctx.fillStyle = '#4CAF50';  // Green for selected
-                ctx.strokeStyle = '#2e7d32';
-                ctx.lineWidth = 4;
+                treeCtx.fillStyle = '#4CAF50';
+                treeCtx.strokeStyle = '#2e7d32';
+                treeCtx.lineWidth = 4;
             } else if (isDisabled) {
-                ctx.fillStyle = '#BDBDBD';  // Gray for disabled
-                ctx.strokeStyle = '#757575';
-                ctx.lineWidth = 2;
+                treeCtx.fillStyle = '#BDBDBD';
+                treeCtx.strokeStyle = '#757575';
+                treeCtx.lineWidth = 2;
             } else {
-                ctx.fillStyle = '#2196F3';  // Blue for normal
-                ctx.strokeStyle = '#1976D2';
-                ctx.lineWidth = 2;
+                treeCtx.fillStyle = '#2196F3';
+                treeCtx.strokeStyle = '#1976D2';
+                treeCtx.lineWidth = 2;
             }
             
-            ctx.fill();
-            ctx.stroke();
+            treeCtx.fill();
+            treeCtx.stroke();
             
-            // Draw node ID
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(node.id, node.x, node.y - 5);
+            treeCtx.fillStyle = 'white';
+            treeCtx.font = 'bold 12px Arial';
+            treeCtx.textAlign = 'center';
+            treeCtx.textBaseline = 'middle';
+            treeCtx.fillText(node.id, node.x, node.y - 5);
             
-            // Draw weight
-            ctx.font = '10px Arial';
-            ctx.fillText('w:' + node.weight, node.x, node.y + 8);
+            treeCtx.font = '10px Arial';
+            treeCtx.fillText('w:' + node.weight, node.x, node.y + 8);
         }
         
-        // Handle canvas click
-        canvas.addEventListener('click', function(event) {
-            let rect = canvas.getBoundingClientRect();
+        function handleTreeClick(event) {
+            let rect = treeCanvas.getBoundingClientRect();
             let clickX = event.clientX - rect.left;
             let clickY = event.clientY - rect.top;
             
-            // Check if click is on any node
-            for (let node of allNodes) {
+            for (let node of allTreeNodes) {
                 let distance = Math.sqrt(
                     Math.pow(clickX - node.x, 2) + 
                     Math.pow(clickY - node.y, 2)
                 );
                 
                 if (distance <= node.radius) {
-                    // Check if currently selected
-                    if (selectedNodes.has(node)) {
-                        // Deselect this node
-                        selectedNodes.delete(node);
+                    if (selectedTreeNodes.has(node)) {
+                        selectedTreeNodes.delete(node);
                     } else {
-                        // Try to select this node
-                        // First check if it has any selected neighbors
                         if (node.hasSelectedNeighbor()) {
-                            // Cannot select - show message
                             alert(`Cannot select ${node.id}: it has selected neighbors. Deselect neighbors first.`);
                         } else {
-                            // Can select - add it and deselect all its neighbors
-                            selectedNodes.add(node);
+                            selectedTreeNodes.add(node);
                             
-                            // Deselect all neighbors
                             let neighbors = node.getNeighbors();
                             for (let neighbor of neighbors) {
-                                selectedNodes.delete(neighbor);
+                                selectedTreeNodes.delete(neighbor);
                             }
                         }
                     }
                     
-                    updateNodeInfo();
+                    updateTreeNodeInfo();
                     drawTree();
                     hideWeightResult();
                     return;
                 }
             }
-            
-            // No node clicked - do nothing (keep current selections)
-        });
+        }
         
-        // Update node info display
-        function updateNodeInfo() {
-            let infoDiv = document.getElementById('nodeInfo');
+        function updateTreeNodeInfo() {
+            let infoDiv = document.getElementById('treeNodeInfo');
             
-            if (selectedNodes.size > 0) {
-                let selectedArray = Array.from(selectedNodes);
+            if (selectedTreeNodes.size > 0) {
+                let selectedArray = Array.from(selectedTreeNodes);
                 let totalWeight = selectedArray.reduce((sum, node) => sum + node.weight, 0);
                 
                 let nodeList = selectedArray
@@ -354,7 +559,7 @@
                     .join(', ');
                 
                 infoDiv.innerHTML = `
-                    <h3>Selected Nodes: ${selectedNodes.size} (Independent Set)</h3>
+                    <h3>Selected Nodes: ${selectedTreeNodes.size} (Independent Set)</h3>
                     <p><strong>Nodes:</strong> ${nodeList}</p>
                     <p><strong>Total Weight:</strong> ${totalWeight}</p>
                     <p><em>Click a green node to deselect it. Gray nodes are disabled.</em></p>
@@ -371,45 +576,39 @@
             }
         }
         
-        // Generate new tree button handler
         function generateNewTree() {
-            selectedNodes.clear();  // Clear all selections
+            selectedTreeNodes.clear();
             generateRandomTree(4);
-            calculatePositions(rootNode, canvas.width / 2, 50, canvas.width - 100);
+            calculateTreePositions(rootNode, treeCanvas.width / 2, 50, treeCanvas.width - 100);
             drawTree();
-            updateNodeInfo();
+            updateTreeNodeInfo();
             hideWeightResult();
         }
         
-        // Clear selection button handler
-        function clearSelection() {
-            selectedNodes.clear();  // Clear all selections
+        function clearTreeSelection() {
+            selectedTreeNodes.clear();
             drawTree();
-            updateNodeInfo();
+            updateTreeNodeInfo();
             hideWeightResult();
         }
         
-        // Compute weight button handler
         function computeWeight() {
-            if (selectedNodes.size === 0) {
+            if (selectedTreeNodes.size === 0) {
                 alert('Please select at least one node first!');
                 return;
             }
             
-            // Calculate sum of weights
             let totalWeight = 0;
             let nodeDetails = [];
             
-            for (let node of selectedNodes) {
+            for (let node of selectedTreeNodes) {
                 totalWeight += node.weight;
                 nodeDetails.push(`${node.id}(${node.weight})`);
             }
             
-            // Display result
             showWeightResult(totalWeight, nodeDetails);
         }
         
-        // Show weight computation result
         function showWeightResult(totalWeight, nodeDetails) {
             let resultDiv = document.getElementById('weightResult');
             let resultText = document.getElementById('weightResultText');
@@ -421,47 +620,37 @@
             resultDiv.style.display = 'block';
         }
         
-        // Hide weight result
         function hideWeightResult() {
             let resultDiv = document.getElementById('weightResult');
             resultDiv.style.display = 'none';
         }
         
-        // Find optimal (maximum weighted independent set) button handler
         function findOptimalSet() {
             if (!rootNode) {
                 alert('Please generate a tree first!');
                 return;
             }
             
-            // Clear current selection
-            selectedNodes.clear();
+            selectedTreeNodes.clear();
             
-            // Compute maximum weighted independent set using dynamic programming
             let result = computeMWIS(rootNode);
             
-            // Select the optimal nodes
             for (let node of result.optimalSet) {
-                selectedNodes.add(node);
+                selectedTreeNodes.add(node);
             }
             
-            // Update display
             drawTree();
-            updateNodeInfo();
+            updateTreeNodeInfo();
             
-            // Show result
             showWeightResult(result.maxWeight, 
                 result.optimalSet.map(node => `${node.id}(${node.weight})`));
         }
         
-        // Compute Maximum Weighted Independent Set using Dynamic Programming
-        // Returns: { maxWeight: number, optimalSet: Set of nodes }
         function computeMWIS(node) {
             if (!node) {
                 return { maxWeight: 0, optimalSet: new Set() };
             }
             
-            // Base case: leaf node
             if (node.children.length === 0) {
                 return { 
                     maxWeight: node.weight, 
@@ -469,11 +658,6 @@
                 };
             }
             
-            // Recursive case: compute for children and grandchildren
-            
-            // Option 1: Include this node
-            // If we include this node, we cannot include its children
-            // But we can include grandchildren
             let includeWeight = node.weight;
             let includeSet = new Set([node]);
             
@@ -487,8 +671,6 @@
                 }
             }
             
-            // Option 2: Exclude this node
-            // If we exclude this node, we can include its children
             let excludeWeight = 0;
             let excludeSet = new Set();
             
@@ -500,7 +682,6 @@
                 }
             }
             
-            // Choose the option with maximum weight
             if (includeWeight >= excludeWeight) {
                 return { 
                     maxWeight: includeWeight, 
@@ -513,9 +694,333 @@
                 };
             }
         }
+
+        // ============================================
+        // VERTEX COVER CODE
+        // ============================================
         
-        // Initialize with a tree
-        generateNewTree();
+        class Vertex {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.radius = 20;
+                this.neighbors = [];
+            }
+            
+            addNeighbor(vertex) {
+                if (!this.neighbors.includes(vertex)) {
+                    this.neighbors.push(vertex);
+                }
+            }
+        }
+        
+        class Edge {
+            constructor(v1, v2) {
+                this.v1 = v1;
+                this.v2 = v2;
+            }
+            
+            isCovered(selectedVertices) {
+                return selectedVertices.has(this.v1) || selectedVertices.has(this.v2);
+            }
+        }
+        
+        let graphCanvas, graphCtx;
+        let vertices = [];
+        let edges = [];
+        let selectedVertices = new Set();
+        
+        function initializeGraph() {
+            graphCanvas = document.getElementById('graphCanvas');
+            graphCtx = graphCanvas.getContext('2d');
+            
+            graphCanvas.addEventListener('click', handleGraphClick);
+            
+            generateNewGraph();
+        }
+        
+        function generateRandomGraph() {
+            vertices = [];
+            edges = [];
+            selectedVertices.clear();
+            
+            let numVertices = parseInt(document.getElementById('numNodes').value);
+            
+            for (let i = 0; i < numVertices; i++) {
+                let x, y;
+                let validPosition = false;
+                
+                while (!validPosition) {
+                    x = Math.random() * (graphCanvas.width - 100) + 50;
+                    y = Math.random() * (graphCanvas.height - 100) + 50;
+                    
+                    validPosition = true;
+                    for (let v of vertices) {
+                        let dist = Math.sqrt(Math.pow(x - v.x, 2) + Math.pow(y - v.y, 2));
+                        if (dist < 50) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                }
+                
+                vertices.push(new Vertex(i, x, y));
+            }
+            
+            let minEdges = numVertices - 1;
+            let maxEdges = Math.min(numVertices * 3, (numVertices * (numVertices - 1)) / 2);
+            let numEdges = Math.floor(Math.random() * (maxEdges - minEdges + 1)) + minEdges;
+            
+            let connected = new Set([vertices[0]]);
+            let unconnected = new Set(vertices.slice(1));
+            
+            while (unconnected.size > 0) {
+                let connectedArray = Array.from(connected);
+                let unconnectedArray = Array.from(unconnected);
+                
+                let v1 = connectedArray[Math.floor(Math.random() * connectedArray.length)];
+                let v2 = unconnectedArray[Math.floor(Math.random() * unconnectedArray.length)];
+                
+                addEdge(v1, v2);
+                connected.add(v2);
+                unconnected.delete(v2);
+            }
+            
+            let attempts = 0;
+            while (edges.length < numEdges && attempts < numEdges * 3) {
+                let v1 = vertices[Math.floor(Math.random() * vertices.length)];
+                let v2 = vertices[Math.floor(Math.random() * vertices.length)];
+                
+                if (v1 !== v2 && !v1.neighbors.includes(v2)) {
+                    addEdge(v1, v2);
+                }
+                attempts++;
+            }
+        }
+        
+        function addEdge(v1, v2) {
+            edges.push(new Edge(v1, v2));
+            v1.addNeighbor(v2);
+            v2.addNeighbor(v1);
+        }
+        
+        function drawGraph() {
+            graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+            
+            for (let edge of edges) {
+                drawEdge(edge);
+            }
+            
+            for (let vertex of vertices) {
+                drawVertex(vertex);
+            }
+        }
+        
+        function drawEdge(edge) {
+            let isCovered = edge.isCovered(selectedVertices);
+            
+            graphCtx.beginPath();
+            graphCtx.moveTo(edge.v1.x, edge.v1.y);
+            graphCtx.lineTo(edge.v2.x, edge.v2.y);
+            graphCtx.strokeStyle = isCovered ? '#666' : '#f44336';
+            graphCtx.lineWidth = isCovered ? 2 : 3;
+            graphCtx.stroke();
+        }
+        
+        function drawVertex(vertex) {
+            let isSelected = selectedVertices.has(vertex);
+            
+            graphCtx.beginPath();
+            graphCtx.arc(vertex.x, vertex.y, vertex.radius, 0, 2 * Math.PI);
+            graphCtx.fillStyle = isSelected ? '#4CAF50' : '#2196F3';
+            graphCtx.fill();
+            graphCtx.strokeStyle = isSelected ? '#2e7d32' : '#1976D2';
+            graphCtx.lineWidth = isSelected ? 3 : 2;
+            graphCtx.stroke();
+            
+            graphCtx.fillStyle = 'white';
+            graphCtx.font = 'bold 14px Arial';
+            graphCtx.textAlign = 'center';
+            graphCtx.textBaseline = 'middle';
+            graphCtx.fillText('v' + vertex.id, vertex.x, vertex.y);
+        }
+        
+        function handleGraphClick(event) {
+            let rect = graphCanvas.getBoundingClientRect();
+            let clickX = event.clientX - rect.left;
+            let clickY = event.clientY - rect.top;
+            
+            for (let vertex of vertices) {
+                let distance = Math.sqrt(
+                    Math.pow(clickX - vertex.x, 2) + 
+                    Math.pow(clickY - vertex.y, 2)
+                );
+                
+                if (distance <= vertex.radius) {
+                    if (selectedVertices.has(vertex)) {
+                        selectedVertices.delete(vertex);
+                    } else {
+                        selectedVertices.add(vertex);
+                    }
+                    updateGraphNodeInfo();
+                    drawGraph();
+                    hideGraphResult();
+                    return;
+                }
+            }
+        }
+        
+        function updateGraphNodeInfo() {
+            let infoDiv = document.getElementById('graphNodeInfo');
+            
+            if (selectedVertices.size > 0) {
+                let vertexList = Array.from(selectedVertices)
+                    .map(v => 'v' + v.id)
+                    .sort((a, b) => {
+                        let numA = parseInt(a.substring(1));
+                        let numB = parseInt(b.substring(1));
+                        return numA - numB;
+                    })
+                    .join(', ');
+                
+                infoDiv.innerHTML = `
+                    <h3>Selected Vertices: ${selectedVertices.size}</h3>
+                    <p><strong>Vertices:</strong> ${vertexList}</p>
+                    <p><em>Click "Check Vertex Cover" to verify if this is a valid vertex cover</em></p>
+                `;
+            } else {
+                infoDiv.innerHTML = `
+                    <h3>Click vertices to select them</h3>
+                    <p><strong>Vertex Cover:</strong> A set of vertices such that every edge has at least one endpoint in the set</p>
+                `;
+            }
+        }
+        
+        function checkVertexCover() {
+            if (selectedVertices.size === 0) {
+                alert('Please select at least one vertex first!');
+                return;
+            }
+            
+            let uncoveredEdges = [];
+            
+            for (let edge of edges) {
+                if (!edge.isCovered(selectedVertices)) {
+                    uncoveredEdges.push(edge);
+                }
+            }
+            
+            showGraphResult(uncoveredEdges.length === 0, uncoveredEdges);
+            drawGraph();
+        }
+        
+        function showGraphResult(isValid, uncoveredEdges) {
+            let resultDiv = document.getElementById('resultDiv');
+            
+            if (isValid) {
+                resultDiv.className = 'result valid';
+                resultDiv.style.backgroundColor = '#c8e6c9';
+                resultDiv.style.borderLeft = '4px solid #4CAF50';
+                resultDiv.innerHTML = `
+                    <h3>✓ Valid Vertex Cover!</h3>
+                    <p>All ${edges.length} edges are covered by the selected ${selectedVertices.size} vertices.</p>
+                `;
+            } else {
+                let edgeList = uncoveredEdges
+                    .map(e => `(v${e.v1.id}, v${e.v2.id})`)
+                    .join(', ');
+                
+                resultDiv.className = 'result invalid';
+                resultDiv.style.backgroundColor = '#ffcdd2';
+                resultDiv.style.borderLeft = '4px solid #f44336';
+                resultDiv.innerHTML = `
+                    <h3>✗ Not a Valid Vertex Cover</h3>
+                    <p><strong>${uncoveredEdges.length}</strong> edge(s) not covered: ${edgeList}</p>
+                    <p>These edges are shown in red. Add vertices to cover them.</p>
+                `;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+        
+        function hideGraphResult() {
+            let resultDiv = document.getElementById('resultDiv');
+            resultDiv.style.display = 'none';
+        }
+        
+        function findOptimalVertexCover() {
+            if (vertices.length === 0) {
+                alert('Please generate a graph first!');
+                return;
+            }
+            
+            selectedVertices.clear();
+            
+            let uncoveredEdges = [...edges];
+            let coverVertices = new Set();
+            
+            while (uncoveredEdges.length > 0) {
+                let edge = uncoveredEdges[0];
+                
+                coverVertices.add(edge.v1);
+                coverVertices.add(edge.v2);
+                
+                uncoveredEdges = uncoveredEdges.filter(e => 
+                    !coverVertices.has(e.v1) && !coverVertices.has(e.v2)
+                );
+            }
+            
+            let improved = true;
+            while (improved) {
+                improved = false;
+                for (let vertex of coverVertices) {
+                    let testSet = new Set(coverVertices);
+                    testSet.delete(vertex);
+                    
+                    let allCovered = edges.every(edge => 
+                        testSet.has(edge.v1) || testSet.has(edge.v2)
+                    );
+                    
+                    if (allCovered) {
+                        coverVertices = testSet;
+                        improved = true;
+                        break;
+                    }
+                }
+            }
+            
+            selectedVertices = new Set(coverVertices);
+            
+            updateGraphNodeInfo();
+            drawGraph();
+            
+            showGraphResult(true, []);
+            let resultDiv = document.getElementById('resultDiv');
+            resultDiv.innerHTML = `
+                <h3>✓ Optimal Vertex Cover Found!</h3>
+                <p>Minimum vertex cover size: <strong>${selectedVertices.size}</strong> vertices</p>
+                <p>All ${edges.length} edges are covered.</p>
+            `;
+        }
+        
+        function generateNewGraph() {
+            generateRandomGraph();
+            drawGraph();
+            updateGraphNodeInfo();
+            hideGraphResult();
+        }
+        
+        function clearGraphSelection() {
+            selectedVertices.clear();
+            drawGraph();
+            updateGraphNodeInfo();
+            hideGraphResult();
+        }
+        
+        function updateNodeCount(value) {
+            document.getElementById('nodeCountDisplay').textContent = value;
+        }
     </script>
 </body>
 </html>
